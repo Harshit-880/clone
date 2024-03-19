@@ -10,8 +10,6 @@ class Post(models.Model):
     reacted_by = models.ManyToManyField(Profile, through='PostReaction', related_name="reacted_posts")
     commented_by = models.ManyToManyField(Profile, through='Comment', related_name="commented_posts")
     
-    def __str__(self):
-        return f"{self.post_owner.full_name}--> Post{self.id}"
 
 
 class PostImages(models.Model):

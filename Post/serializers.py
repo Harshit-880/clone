@@ -1,6 +1,7 @@
 from rest_framework import serializers, status
 from .models import *
 from Post.models import *
+from rest_framework.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 from Profile.serializers import ShortProfileSerializer
 
@@ -31,11 +32,13 @@ class PostSerializer(serializers.ModelSerializer):
             data['self_like']=True
         
         post_images=PostImages.objects.filter(post=instance)
+        # print(instance)
         # to get only image from Post image model we use PostImageSerializer 
         data['image']=PostImageSerializer(instance=post_images,many=True).data
         data['created_at']=instance.created_at.strftime("%Y-%m-%d %H:%M:%S")
         data['like_count'] = len(data.pop('reacted_by'))
         # reacted_by data is in the same model Post
+        # print(instance.reacted_by)
         data['reacted_by'] = ShortProfileSerializer(instance=instance.reacted_by,many=True).data[:2]
         
         post_comments=Comment.objects.filter(post=instance)
@@ -65,3 +68,20 @@ class PostSerializer(serializers.ModelSerializer):
             PostImages.objects.bulk_create(post_images_list)
         return post
         
+
+class LikeSerializer(serializers.ModelSerializer):
+
+    # reacted_by_profile = ShortProfileSerializer(source = "reacted_by",read_only = True)
+    # post_data = PostSerializer(source = "post", read_only = True)
+
+    class Meta:
+        model= PostReaction
+        fields=['post']
+
+    def create(self, validated_data):
+        post=validated_data.get('post')
+        reacted_by = self.context['request'].user.profile
+        existing_reaction = PostReaction.objects.filter(post=post, reacted_by=reacted_by).exists()
+        if existing_reaction:
+            raise ValidationError("You've already reacted to this post.")
+        return super().create(validated_data)
