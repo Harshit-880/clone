@@ -8,6 +8,7 @@ from Profile.models import Profile
 from rest_framework.generics import CreateAPIView,ListCreateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.core.exceptions import ObjectDoesNotExist
 
 
 
@@ -36,3 +37,18 @@ class likeUplode(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class CommentUplodeview(CreateAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class=CommentUplodeSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            profile = Profile.objects.get(user=request.user)
+            print(request.data)
+            request.data.update({"comment_owner": profile.id})
+            return super().post(request, *args, **kwargs)
+        except ObjectDoesNotExist:
+            return Response({"error": "Profile not found for the authenticated user"}, status=status.HTTP_404_NOT_FOUND)

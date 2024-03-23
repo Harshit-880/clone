@@ -81,3 +81,23 @@ class FollowingView(ListAPIView):
     def get_queryset(self):
         user_id = self.kwargs.get('user_id')
         return Follow.objects.filter(followers_set = user_id)
+    
+
+class UnfollowView(views.APIView):
+    
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        
+        id = request.data.get('id')
+        if id is None:
+            return Response({"detail": "Please provide the username."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        profile = get_object_or_404(Profile, id=id)
+        if not profile.follower.filter(id = self.request.user.id).exists():
+            return Response({"detail": "You are not following this user"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+        profile.follower.remove(self.request.user)
+        return Response({"detail": "You have successfully unfollowed the user"}, status=status.HTTP_200_OK)

@@ -85,3 +85,22 @@ class LikeSerializer(serializers.ModelSerializer):
         if existing_reaction:
             raise ValidationError("You've already reacted to this post.")
         return super().create(validated_data)
+    
+
+class CommentUplodeSerializer(serializers.ModelSerializer):
+
+    comment_owner_profile = ShortProfileSerializer(source = "comment_owner",read_only = True)
+
+    class Meta:
+        model=Comment
+        fields='__all__'
+
+    def to_representation(self, instance):
+        data=super().to_representation(instance)
+        data['created_at'] = instance.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        data['replies_count'] = len(data.pop('replied_by'))
+        return data
+
+    def create(self, validated_data):
+        comment=super().create(validated_data)
+        return comment

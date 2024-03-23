@@ -5,4 +5,5 @@ urlpatterns = [
     path('follow/',followview.as_view()),
     path('followersview/<int:user_id>/',FollowersView.as_view()),
     path('followingview/<int:user_id>/',FollowingView.as_view()),
+    path('UnfollowView/',UnfollowView.as_view()),
 ]
