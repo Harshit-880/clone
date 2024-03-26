@@ -9,8 +9,8 @@ from rest_framework.generics import CreateAPIView,ListCreateAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.exceptions import ObjectDoesNotExist
-
-
+from rest_framework.pagination import PageNumberPagination
+from Network.views import PaginationHandlerMixin
 
 
 class PostUplode(CreateAPIView):
@@ -68,3 +68,41 @@ class ReplyUplodeview(CreateAPIView):
             return super().post(request, *args, **kwargs)
         except ObjectDoesNotExist:
             return Response({"error": "Profile not found for the authenticated user"}, status=status.HTTP_404_NOT_FOUND)
+        
+
+class BasicPagination(PageNumberPagination):
+    
+    page_size= 8
+    page_size_query_param = 'limit'
+    max_page_size = 20  
+    
+  
+  
+def check_post_exists_in_response(post, response):
+        for item in response:
+            if post.id == item['id']:
+                return True
+        return False
+
+
+class feedView(APIView,PaginationHandlerMixin):
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = BasicPagination
+
+    def get(self, request, *args, **kwargs):
+        response=list()
+
+        user_profile=get_object_or_404(Profile,user=self.request.user)
+        following_profiles = self.request.user.following.all()
+        for profile in following_profiles:
+            # for post in profile.created_posts.all():
+            #     if not check_post_exists_in_response(post,response):
+            #         data = PostSerializer(instance = post, context = {"request": self.request}).data
+            #         response.append(data)
+            for post in Post.objects.all():
+                if not check_post_exists_in_response(post,response):
+                    data = PostSerializer(instance = post, context = {"request": self.request}).data
+                    response.append(data)
+        page = self.paginate_queryset(response)
+        return self.get_paginated_response(page)
