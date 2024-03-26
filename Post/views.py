@@ -47,8 +47,24 @@ class CommentUplodeview(CreateAPIView):
     def post(self, request, *args, **kwargs):
         try:
             profile = Profile.objects.get(user=request.user)
-            print(request.data)
+            request.data._mutable=True
             request.data.update({"comment_owner": profile.id})
+            request.data._mutable=False
+            return super().post(request, *args, **kwargs)
+        except ObjectDoesNotExist:
+            return Response({"error": "Profile not found for the authenticated user"}, status=status.HTTP_404_NOT_FOUND)
+
+class ReplyUplodeview(CreateAPIView):
+    
+    permission_classes = [IsAuthenticated]
+    serializer_class=ReplyUplodeSerializer
+
+    def post(self, request, *args, **kwargs):
+        try:
+            profile = Profile.objects.get(user=request.user)
+            request.data._mutable=True
+            request.data.update({"reply_owner": profile.id})
+            request.data._mutable=False
             return super().post(request, *args, **kwargs)
         except ObjectDoesNotExist:
             return Response({"error": "Profile not found for the authenticated user"}, status=status.HTTP_404_NOT_FOUND)

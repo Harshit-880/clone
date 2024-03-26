@@ -104,3 +104,19 @@ class CommentUplodeSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         comment=super().create(validated_data)
         return comment
+    
+class ReplyUplodeSerializer(serializers.ModelSerializer):
+
+    reply_owner_profile = ShortProfileSerializer(source = "reply_owner",read_only = True)
+    class Meta:
+        model=commentReply
+        fields="__all__"
+    
+    def to_representation(self, instance):
+        data= super().to_representation(instance)
+        data['created_at'] = instance.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        return data
+    
+    def create(self, validated_data):
+        reply = super().create(validated_data)
+        return reply
